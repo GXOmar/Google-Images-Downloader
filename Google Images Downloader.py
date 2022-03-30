@@ -45,9 +45,8 @@ ChromiumBrave.binary_location = r"C:\Program Files\BraveSoftware\Brave-Browser\A
 ChromeDriverPATH = Service("C:\Program Files (x86)\chromedriver.exe")
 Search_URL = "http://www.google.com/search?q={q}&tbm=isch"
 
-Success_downloads = 0
-Failure_downloads = 0
-FailedToSaveImage = 0
+FolderPath = r"D:\Omar\Pictures\Downloaded Images from google"
+Success_downloads, Failure_downloads, FailedToSaveImage = 0, 0, 0 # track image stats
 
 def fetch_image_URLs(search_query: str, MAX_number_of_images: int, wd: webdriver):
     """Locate and fetch image URLs from google.com/imghp"""
@@ -110,28 +109,30 @@ def fetch_image_URLs(search_query: str, MAX_number_of_images: int, wd: webdriver
             else: # this happens when no images have been found!
                 print(f"{CLI_TextColor.RED}Sorry, Couldn't find any images!")
                 wd.quit() # close the web browser window
-                notification.notify("Failed to find images!", f"Sorry, Couldn't find any images", app_icon=r".\\Notification Icons\vcsconflicting.ico")
+                notification.notify("Failed to find images!", f"Sorry, Couldn't find any images", app_icon=r".\Notification Icons\vcsconflicting.ico")
                 raise SystemExit # exit/end the program
 
 def check_image_resolution(wd: webdriver):
     """Check an image resolution, minimum image resolution should be Full HD(1920 x 1080)"""
-    Minimum_Width, Minimum_Hight = 1920, 1080
-    try:
-        # Find the image resolution, the resolution is based of what google is displaying when you hover over the image.
-        # Checking the image resolution without downloading the image itself to save data (this is not a perfect way of getting an image resolution!).
-        ImageWidth, unknownCharacter, ImageHight = WebDriverWait(wd, 5).until(
-            EC.presence_of_element_located((By.XPATH, Image_Resolution_XPath))).get_attribute("textContent").split(' ')
-    except Exception:
-        return False
-    ImageWidth, ImageHight = ImageWidth.replace(',', ''), ImageHight.replace(',', '') 
-    return True if int(ImageWidth) >= Minimum_Width and int(ImageHight) >= Minimum_Hight else False
+    if DoCheckResolution == "y":
+        Minimum_Width, Minimum_Hight = 1920, 1080
+        try:
+            # Find the image resolution, the resolution is based of what google is displaying when you hover over the image.
+            # Checking the image resolution without downloading the image itself to save data (this is not a perfect way of getting an image resolution!).
+            ImageWidth, unknownCharacter, ImageHight = WebDriverWait(wd, 5).until(
+                EC.presence_of_element_located((By.XPATH, Image_Resolution_XPath))).get_attribute("textContent").split(' ')
+        except Exception:
+            return False
+        ImageWidth, ImageHight = ImageWidth.replace(',', ''), ImageHight.replace(',', '') 
+        return True if int(ImageWidth) >= Minimum_Width and int(ImageHight) >= Minimum_Hight else False
 
+    else:
+        return True # Quick implementation to ignore checking the image resolution form a user input.
+        
 def download_and_save_image(image_url: str, folder_path: str):
     """Download and save the image to a targeted folder with a random name assigned to the image file"""
 
-    global Success_downloads
-    global Failure_downloads
-    global FailedToSaveImage
+    global Success_downloads, Failure_downloads, FailedToSaveImage
 
     try:
         image_content = requests.get(image_url) # download the image content!
@@ -152,7 +153,7 @@ def download_and_save_image(image_url: str, folder_path: str):
         FailedToSaveImage += 1
         return print(f"\n{CLI_TextColor.YELLOW}ERROR - Couldn't save image: {image_url} - {FailedToSaveImageError}{CLI_TextColor.RESET}\n", flush=True)
 
-def download_images_from_google(search_query: str, driver_path: str, number_of_images: int, targeted_Folder=r"D:\Omar\Pictures\Downloaded Images from google"):
+def download_images_from_google(search_query: str, driver_path: str, number_of_images: int, targeted_Folder: str):
     with webdriver.Chrome(service=driver_path, options=ChromiumBrave) as wd: # This web driver will open Brave web browser.
         wd.maximize_window()
         URLs = fetch_image_URLs(search_query, number_of_images, wd)
@@ -168,10 +169,16 @@ def download_images_from_google(search_query: str, driver_path: str, number_of_i
         download_and_save_image(URL, Folder_path)
 
 if __name__ == "__main__":
-    UserSearchQuery = input("Images to search for: ")
-    NumberOfImagesToSearch = int(input("Number of images to download: ") or 5)
-    download_images_from_google(UserSearchQuery, ChromeDriverPATH, NumberOfImagesToSearch)
+    while True:
+        UserSearchQuery = input("Images to search for: ")
+        if UserSearchQuery == '' or UserSearchQuery.isspace():
+            continue
+        else:
+            break
+    NumberOfImagesToSearch = int(input("Number of images to download: ").strip() or 5)
+    DoCheckResolution = input("Check image resolution? [y/n]: ").strip() or 'n'
+    download_images_from_google(UserSearchQuery, ChromeDriverPATH, NumberOfImagesToSearch, FolderPath)
     result = f"Download complete: {CLI_TextColor.GREEN}{Success_downloads} Success, {CLI_TextColor.RED}{Failure_downloads} Failures"
     print(result + f", {CLI_TextColor.YELLOW}{FailedToSaveImage} Failed to save images" if FailedToSaveImage > 0 else result, flush=True)
     # notify me when finish downloading.
-    notification.notify("Download complete!", f"Downloaded {Success_downloads} images", app_icon=r".\\Notification Icons\iconfinder-check.ico")
+    notification.notify("Download complete!", f"Downloaded {Success_downloads} images", app_icon=r".\Notification Icons\iconfinder-check.ico")
