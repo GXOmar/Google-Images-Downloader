@@ -20,9 +20,9 @@ from plyer import notification
 from colorama.ansi import Fore as CLI_TextColor
 
 # XPATH location of the image resolution.
-Image_Resolution_XPath = '//*[@id="Sva75c"]/div/div/div[3]/div[2]/c-wiz/div/div[1]/div[1]/div[2]/div/a/span' 
-# XPATH location of the image URL with checkers that starts with "https" and ends with an image file extention (.jpg or .jpeg or .png)
-ImageXPath_with_checkers = '//*[@id="Sva75c"]/div/div/div[3]/div[2]/c-wiz/div/div[1]/div[1]/div[2]/div/a/img\
+Image_Resolution_XPath = '//*[@id="Sva75c"]/div/div/div[3]/div[2]/c-wiz/div/div[1]/div[1]/div[3]/div/a/span'
+# XPATH location of the image URL with checkers that starts with "https" and ends with an image file extension (.jpg or .jpeg or .png)
+ImageXPath_with_checkers = '//*[@id="Sva75c"]/div/div/div[3]/div[2]/c-wiz/div/div[1]/div[1]/div[3]/div/a/img\
     [@src[starts-with(., "https") and substring(., (string-length(.) - string-length(".jpg") + 1)) = ".jpg"\
               or substring(., string-length(.) - string-length(".jpeg") + 1) = ".jpeg"\
                    or substring(., string-length(.) - string-length(".png") + 1) = ".png"]]'
