@@ -97,7 +97,7 @@ def fetch_image_URLs(search_query: str, MAX_number_of_images: int, wd: webdriver
 
                     if len(image_links) >= MAX_number_of_images:
                         update_progress_bar(images_URL_pbar, close=True) # close the progress bar.
-                        print(f"\n{CLI_TextColor.GREEN}Done, Found {len(image_links)} images{CLI_TextColor.RESET}\n", flush=True)
+                        print(f"\n{CLI_TextColor.GREEN}Done, Found {len(image_links)} images{CLI_TextColor.RESET}", flush=True)
                         return image_links # Done!
                 else:
                     continue # check the next image for a better resolution
@@ -148,7 +148,7 @@ def download_and_save_image(image_url: str, folder_path: str, progress_bar_insta
         image_content.raise_for_status()
     except Exception as FailedToDownloadImageError:
         Failure_downloads += 1
-        return print(f"\n{CLI_TextColor.RED}ERROR - Couldn't download image: {image_url} - {FailedToDownloadImageError}{CLI_TextColor.RESET}\n", flush=True)
+        return print(f"\n{CLI_TextColor.RED}ERROR - Couldn't download image: {image_url} - {FailedToDownloadImageError}{CLI_TextColor.RESET}\n") # will print then the script terminate!
     
     NewImageName = os.path.join(folder_path, str(uuid4()).replace('-', '')[:12] + os.path.splitext(image_url)[-1])
     # "os.path.splitext(image_url)[-1]" is to get the image extension out of image_url.
@@ -161,7 +161,7 @@ def download_and_save_image(image_url: str, folder_path: str, progress_bar_insta
         update_progress_bar(progress_bar_instance)
     except Exception as FailedToSaveImageError:
         FailedToSaveImage += 1
-        return print(f"\n{CLI_TextColor.YELLOW}ERROR - Couldn't save image: {image_url} - {FailedToSaveImageError}{CLI_TextColor.RESET}\n", flush=True)
+        return print(f"\n{CLI_TextColor.YELLOW}ERROR - Couldn't save image: {image_url} - {FailedToSaveImageError}{CLI_TextColor.RESET}\n") # will print then the script terminate!
 
 def download_images_from_google(search_query: str, driver_path: str, number_of_images: int, targeted_Folder: str):
     with webdriver.Chrome(service=driver_path, options=ChromiumBrave) as wd: # This web driver will open Brave web browser.
