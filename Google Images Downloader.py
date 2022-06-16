@@ -29,6 +29,7 @@ ImageXPath_with_checkers = '//*[@id="Sva75c"]/div/div/div[3]/div[2]/c-wiz/div/di
                    or substring(., string-length(.) - string-length(".png") + 1) = ".png"]]'
 
 # Footer location in ViewPort, The program will end when the footer is visible in ViewPort(on screen)
+# This multi-line string is a javascript code that will be executed by the webdriver in the browser to determine the status of the ViewPort
 FooterCurrentViewPort = """
 footer_currentVP = document.querySelector('#ZCHFDb').getBoundingClientRect();
 if (footer_currentVP.top != 0 && footer_currentVP.bottom != 0 && footer_currentVP.right != 0) { 
