@@ -17,6 +17,7 @@ from selenium.webdriver.chrome.service import Service
 import requests, os, time
 from uuid import uuid4
 from plyer import notification
+from tqdm import tqdm
 from colorama.ansi import Fore as CLI_TextColor
 
 # XPATH location of the image resolution.
@@ -61,6 +62,8 @@ def fetch_image_URLs(search_query: str, MAX_number_of_images: int, wd: webdriver
     image_links = set()
     image_count = 0
     starting_position = 0
+    # Create the actual progress bar to track the number of image URL being found.
+    images_URL_pbar = tqdm(total=MAX_number_of_images, colour='#00cc96', desc='Images URL', bar_format='{percentage:3.0f}%|{bar}| (Total {desc} found: {n_fmt}/{total_fmt})') 
 
     while image_count < MAX_number_of_images:
         scroll_page(wd)
@@ -90,8 +93,10 @@ def fetch_image_URLs(search_query: str, MAX_number_of_images: int, wd: webdriver
                         continue # try the next image!
 
                     image_links.add(image_URL)
+                    update_progress_bar(images_URL_pbar)
 
                     if len(image_links) >= MAX_number_of_images:
+                        update_progress_bar(images_URL_pbar, close=True) # close the progress bar.
                         print(f"\n{CLI_TextColor.GREEN}Done, Found {len(image_links)} images{CLI_TextColor.RESET}\n", flush=True)
                         return image_links # Done!
                 else:
@@ -101,6 +106,7 @@ def fetch_image_URLs(search_query: str, MAX_number_of_images: int, wd: webdriver
             starting_position = len(ImageThumbnails)
 
         else: # Footer is visible in ViewPort!
+            update_progress_bar(images_URL_pbar, close=True) # close the progress bar.
             print("Looks like you've reached the end!".center(30, '-'), flush=True)
             if len(image_links) >= 1:
                 print(f"{CLI_TextColor.BLUE}Got {len(image_links)} out of {MAX_number_of_images} images!{CLI_TextColor.RESET}", flush=True)
@@ -111,6 +117,9 @@ def fetch_image_URLs(search_query: str, MAX_number_of_images: int, wd: webdriver
                 wd.quit() # close the web browser window
                 notification.notify("Failed to find images!", f"Sorry, Couldn't find any images", app_icon=r".\Notification Icons\vcsconflicting.ico")
                 raise SystemExit # exit/end the program
+
+def update_progress_bar(progress_bar_instance: tqdm, close=False):
+    progress_bar_instance.update() if close != True else progress_bar_instance.close()
 
 def check_image_resolution(wd: webdriver):
     """Check an image resolution, minimum image resolution should be Full HD(1920 x 1080)"""
@@ -129,7 +138,7 @@ def check_image_resolution(wd: webdriver):
     else:
         return True # Quick implementation to ignore checking the image resolution form a user input.
         
-def download_and_save_image(image_url: str, folder_path: str):
+def download_and_save_image(image_url: str, folder_path: str, progress_bar_instance: tqdm):
     """Download and save the image to a targeted folder with a random name assigned to the image file"""
 
     global Success_downloads, Failure_downloads, FailedToSaveImage
@@ -142,13 +151,14 @@ def download_and_save_image(image_url: str, folder_path: str):
         return print(f"\n{CLI_TextColor.RED}ERROR - Couldn't download image: {image_url} - {FailedToDownloadImageError}{CLI_TextColor.RESET}\n", flush=True)
     
     NewImageName = os.path.join(folder_path, str(uuid4()).replace('-', '')[:12] + os.path.splitext(image_url)[-1])
-    # os.path.splitext(image_url)[-1] is to get the image extention out of image_url.
+    # "os.path.splitext(image_url)[-1]" is to get the image extension out of image_url.
     # The final name would be like >>> D:\Omar\Pictures\Downloaded Images from google\<query>\54afh91a97sf.(jpg or jpeg or png)
     try: # open a new image file and save the image_content to it!
         with open(NewImageName, 'wb') as NewImage:
             for chunk in image_content.iter_content(100000):
                 NewImage.write(chunk)
         Success_downloads += 1
+        update_progress_bar(progress_bar_instance)
     except Exception as FailedToSaveImageError:
         FailedToSaveImage += 1
         return print(f"\n{CLI_TextColor.YELLOW}ERROR - Couldn't save image: {image_url} - {FailedToSaveImageError}{CLI_TextColor.RESET}\n", flush=True)
@@ -165,8 +175,11 @@ def download_images_from_google(search_query: str, driver_path: str, number_of_i
         print(f"{CLI_TextColor.MAGENTA}Folder created: {Folder_path}{CLI_TextColor.RESET}", flush=True)
 
     print(f"{CLI_TextColor.CYAN}Downloading the images, Please wait...{CLI_TextColor.RESET}", flush=True)
+    # create the actual progress bar to track the number of images being saved to the local drive
+    images_saved_pbar = tqdm(total=NumberOfImagesToSearch, colour='#00cccc', desc='images saved', bar_format='{percentage:3.0f}%|{bar}| (Total {desc}: {n_fmt}/{total_fmt})')
     for URL in URLs:
-        download_and_save_image(URL, Folder_path)
+        download_and_save_image(URL, Folder_path, images_saved_pbar)
+    update_progress_bar(images_saved_pbar, close=True) # close the progress bar.
 
 if __name__ == "__main__":
     while True:
